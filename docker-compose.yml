@@ -1,0 +1,302 @@
+# homelab-media-docker-stack
+#
+# Services
+#   Traefik     - Proxy server
+#   Heimdall    - Dashboard
+#   Plex        - Media player
+#   Tautulli    - Plex statistics
+#   Ombi        - Allows users to request shows/movies to add to Plex/Sonarr/Radarr
+#   Sonarr      - Searches for TV shows to download
+#   Radarr      - Searches for movies to download
+#   NZBget      - Usenet downloader
+#   NZBHydra    - Usenet indexer consolidation
+#   Jackett     - Allows Sonarr/Radarr to search torrent trackers
+#   Deluge      - Torrent downloader (uses nginx container as frontend proxy)
+#   VPN         - VPN client to route torrent (deluge) traffic through
+#   Portainer   - Manage containers
+
+version: '3'
+services:
+  heimdall:
+    image: 'linuxserver/heimdall:latest'
+    container_name: heimdall
+    volumes:
+      - '/mnt/media/.heimdall:/config'
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/New_York
+    labels:
+      - traefik.enable=true
+      - traefik.backend=heimdall
+      - 'traefik.frontend.rule=Host:${DOMAIN}'
+      - traefik.docker.network=traefik
+    networks:
+      - traefik
+    expose:
+      - 80
+      - 443
+    restart: always
+  plex:
+    image: 'linuxserver/plex:latest'
+    container_name: plex
+    hostname: plex-prime
+    volumes:
+      - '/mnt/media:/data'
+      - '/mnt/media/.plex:/config'
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/New_York
+      - VERSION=latest
+    labels:
+      - traefik.enable=true
+      - traefik.backend=plex
+      - 'traefik.frontend.rule=Host:plex.${DOMAIN}'
+      - traefik.docker.network=traefik
+      - traefik.port=32400
+    networks:
+      - default
+      - traefik
+    ports:
+      - '32400:32400'
+      - '3005:3005'
+      - '8324:8324'
+      - '1900:1900/udp'
+      - '32410:32410/udp'
+      - '32412:32412/udp'
+      - '32413:32413/udp'
+      - '32414:32414/udp'
+    restart: always
+  tautulli:
+    image: 'tautulli/tautulli:latest'
+    container_name: tautulli
+    depends_on:
+      - plex
+    volumes:
+      - '/mnt/media/.tautulli:/config'
+      - '/mnt/media/.plex/Library/Application Support/Plex Media Server/Logs:/logs:ro'
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/New_York
+    labels:
+      - traefik.enable=true
+      - traefik.backend=tautulli
+      - 'traefik.frontend.rule=Host:tautulli.${DOMAIN}'
+      - traefik.docker.network=traefik
+      - traefik.port=8181
+    networks:
+      - traefik
+    expose:
+      - 8181
+    restart: always
+  ombi:
+    image: 'linuxserver/ombi:latest'
+    container_name: ombi
+    volumes:
+      - '/mnt/media/.ombi:/config'
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/New_York
+    labels:
+      - traefik.enable=true
+      - traefik.backend=ombi
+      - 'traefik.frontend.rule=Host:ombi.${DOMAIN}'
+      - traefik.docker.network=traefik
+      - traefik.port=3579
+    networks:
+      - traefik
+    expose:
+      - 3579
+    restart: always
+  sonarr:
+    image: 'linuxserver/sonarr:latest'
+    container_name: sonarr
+    volumes:
+      - '/etc/localtime:/etc/localtime:ro'
+      - '/mnt/media/.sonarr:/config'
+      - '/mnt/media:/data'
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/New_York
+    labels:
+      - traefik.enable=true
+      - traefik.backend=sonarr
+      - 'traefik.frontend.rule=Host:sonarr.${DOMAIN}'
+      - traefik.docker.network=traefik
+      - traefik.port=8989
+    depends_on:
+      - vpnclient
+    network_mode: 'service:vpnclient'
+    restart: always
+  radarr:
+    image: 'linuxserver/radarr:latest'
+    container_name: radarr
+    volumes:
+      - '/mnt/media/.radarr:/config'
+      - '/mnt/media:/data'
+      - '/etc/localtime:/etc/localtime:ro'
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/New_York
+    labels:
+      - traefik.enable=true
+      - traefik.backend=radarr
+      - 'traefik.frontend.rule=Host:radarr.${DOMAIN}'
+      - traefik.docker.network=traefik
+      - traefik.port=7878
+    depends_on:
+      - vpnclient
+    network_mode: 'service:vpnclient'
+    restart: always
+  nzbget:
+    image: 'linuxserver/nzbget:latest'
+    container_name: nzbget
+    volumes:
+      - '/mnt/media/.nzbget:/config'
+      - '/mnt/media:/data'
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/New_York
+    labels:
+      - traefik.enable=true
+      - traefik.backend=nzbget
+      - 'traefik.frontend.rule=Host:nzbget.${DOMAIN}'
+      - traefik.docker.network=traefik
+      - traefik.port=6789
+    depends_on:
+      - vpnclient
+    network_mode: 'service:vpnclient'
+    restart: always
+  deluge:
+    image: 'linuxserver/deluge:latest'
+    container_name: deluge
+    labels:
+      - traefik.enable=true
+      - traefik.backend=deluge
+      - 'traefik.frontend.rule=Host:deluge.${DOMAIN}'
+      - traefik.docker.network=traefik
+      - traefik.port=8112
+    depends_on:
+      - vpnclient
+    network_mode: 'service:vpnclient'
+    volumes:
+      - '/mnt/media/.deluge:/config'
+      - '/mnt/media:/data'
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Australia/Victoria
+    stdin_open: true
+    tty: true
+    restart: always
+  vpnclient:
+    image: dperson/openvpn-client
+    container_name: vpnclient
+    cap_add:
+      - net_admin
+    security_opt:
+      - 'label:disable'
+    volumes:
+      - '/dev/net:/dev/net:z'
+      - '/mnt/media/.vpnclient:/vpn'
+      - '/mnt/media/.vpnclient/credentials:/etc/openvpn/credentials'
+    environment:
+      TZ: America/New_York
+      FIREWALL: ''
+    networks:
+      - default
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    read_only: true
+    tmpfs:
+      - /tmp
+    restart: always
+    stdin_open: true
+    tty: true
+  hydra:
+    image: 'linuxserver/hydra:latest'
+    container_name: hydra
+    volumes:
+      - '/mnt/media/.hydra:/config'
+      - '/mnt/media/Downloads:/downloads'
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/New_York
+    labels:
+      - traefik.enable=true
+      - traefik.backend=hydra
+      - 'traefik.frontend.rule=Host:hydra.${DOMAIN}'
+      - traefik.docker.network=traefik
+    networks:
+      - traefik
+    expose:
+      - 5075
+    restart: always
+  jackett:
+    image: 'linuxserver/jackett:latest'
+    container_name: jackett
+    volumes:
+      - '/mnt/media/.jackett:/config'
+      - '/mnt/media/Downloads:/downloads'
+      - '/etc/localtime:/etc/localtime:ro'
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/New_York
+    labels:
+      - traefik.enable=true
+      - traefik.backend=jackett
+      - 'traefik.frontend.rule=Host:jackett.${DOMAIN}'
+      - traefik.docker.network=traefik
+      - traefik.port=9117
+    depends_on:
+      - vpnclient
+    network_mode: 'service:vpnclient'
+    #expose:
+    #  - 9117
+    restart: always
+  traefik:
+    image: 'traefik:latest'
+    container_name: traefik
+    volumes:
+      - '/var/run/docker.sock:/var/run/docker.sock'
+      - '/mnt/media/.traefik/traefik.toml:/traefik.toml'
+      - '/mnt/media/.traefik/acme.json:/acme.json'
+    labels:
+      - traefik.enable=true
+      - traefik.backend=traefik
+      - 'traefik.frontend.rule=Host:traefik.${DOMAIN}'
+      - traefik.docker.network=traefik
+      - traefik.port=8080
+    networks:
+      - default
+      - traefik
+    ports:
+      - '80:80'
+      - '443:443'
+    expose:
+      - 8080
+    restart: always
+  portainer:
+    image: portainer/portainer
+    container_name: portainer
+    ports:
+      - 9000:9000
+    volumes:
+      - /opt/appdata/portainer:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart:
+      always
+
+networks:
+  default: null
+  traefik:
+    external: true
