@@ -260,8 +260,6 @@ services:
     depends_on:
       - vpnclient
     network_mode: 'service:vpnclient'
-    #expose:
-    #  - 9117
     restart: always
   traefik:
     image: 'traefik:latest'
