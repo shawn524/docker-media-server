@@ -1,0 +1,73 @@
+# homelab-media-docker-stack
+#
+# Services
+#   Portainer   - Manage containers
+
+version: "3.6"
+services:
+  portainer:
+    image: portainer/portainer
+    container_name: portainer
+    restart: always
+    command: --templates http://templates/templates.json
+    ports:
+      - "9000:9000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${CONFIG_DIR}/.portainer/data:/data
+      - ${CONFIG_DIR}/shared:/shared
+    environment:
+      - TZ=${TZ}
+  organizr:
+    image: lsiocommunity/organizr
+    container_name: organizr
+    restart: always
+    volumes:
+      - ${CONFIG_DIR}/.organizr:/config
+      - ${CONFIG_DIR}/shared:/shared
+    ports:
+      - "9100:80"
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+  plexms:
+    image: plexinc/pms-docker
+    container_name: plexms
+    restart: always
+    volumes:
+      - ${CONFIG_DIR}/.plexms:/config
+      - ${CONFIG_DIR}/.plexms/transcode:/transcode
+      - /mnt/media/Media:/media
+      - ${CONFIG_DIR}/shared:/shared
+    ports:
+      - "32400:32400/tcp"
+      - "3005:3005/tcp"
+      - "8324:8324/tcp"
+      - "32469:32469/tcp"
+      - "1900:1900/udp"
+      - "32410:32410/udp"
+      - "32412:32412/udp"
+      - "32413:32413/udp"
+      - "32414:32414/udp"
+    environment:
+      - TZ=${TZ}
+      - HOSTNAME="plex-ms"
+      - PLEX_CLAIM=${CLAIM}
+      - PLEX_UID=${PUID}
+      - PLEX_GID=${PGID}
+      - ADVERTISE_IP="http://10.0.10.53:32400/"
+  tautulli:
+    image: linuxserver/tautulli
+    container_name: tautulli
+    restart: always
+    volumes:
+      - ${CONFIG_DIR}/.tautulli/config:/config
+      - ${CONFIG_DIR}/.tautulli/logs:/logs:ro
+      - ${CONFIG_DIR}/shared:/shared
+    ports:
+      - "8181:8181"
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}  
