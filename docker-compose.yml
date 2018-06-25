@@ -3,9 +3,10 @@
 # Services
 #   Portainer   - Manage containers
 #   Organizr    - Home server web interface
+#   Watchtower  - Container Updating
 #   Plex Server - Plex Media Server
 #   Tautilli    - Plex Server Monitor
-#   Watchtower  - Container Updating
+#   VPN         - OpenVPN client to route traffic through
 
 version: "3.6"
 services:
@@ -82,3 +83,28 @@ services:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=${TZ}
+  vpnclient:
+    image: dperson/openvpn-client
+    container_name: vpnclient
+    cap_add:
+      - net_admin
+    security_opt:
+      - 'label:disable'
+    volumes:
+      - /dev/net:/dev/net:z
+      - ${CONFIG_DIR}/.vpnclient:/vpn
+      - ${CONFIG_DIR}/.vpnclient/credentials:/etc/openvpn/credentials
+    environment:
+      TZ: ${TZ}
+      FIREWALL: ''
+    networks:
+      - default
+    dns:
+      - 1.1.1.1
+      - 1.0.0.1
+    read_only: true
+    tmpfs:
+      - /tmp
+    restart: always
+    stdin_open: true
+    tty: true
