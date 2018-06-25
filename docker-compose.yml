@@ -8,7 +8,7 @@ services:
   portainer:
     image: portainer/portainer
     container_name: portainer
-    restart: always
+    restart: unless-stopped
     command: --templates http://templates/templates.json
     ports:
       - "9000:9000"
@@ -21,7 +21,7 @@ services:
   organizr:
     image: lsiocommunity/organizr
     container_name: organizr
-    restart: always
+    restart: unless-stopped
     volumes:
       - ${CONFIG_DIR}/.organizr:/config
       - ${CONFIG_DIR}/shared:/shared
@@ -34,7 +34,7 @@ services:
   plexms:
     image: plexinc/pms-docker
     container_name: plexms
-    restart: always
+    restart: unless-stopped
     volumes:
       - ${CONFIG_DIR}/.plexms:/config
       - ${CONFIG_DIR}/.plexms/transcode:/transcode
@@ -56,11 +56,11 @@ services:
       - PLEX_CLAIM=${CLAIM}
       - PLEX_UID=${PUID}
       - PLEX_GID=${PGID}
-      - ADVERTISE_IP="http://10.0.10.53:32400/"
+      - ADVERTISE_IP=http://10.0.10.53:32400/
   tautulli:
     image: linuxserver/tautulli
     container_name: tautulli
-    restart: always
+    restart: unless-stopped
     volumes:
       - ${CONFIG_DIR}/.tautulli/config:/config
       - ${CONFIG_DIR}/.tautulli/logs:/logs:ro
@@ -70,4 +70,4 @@ services:
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
-      - TZ=${TZ}  
+      - TZ=${TZ}
