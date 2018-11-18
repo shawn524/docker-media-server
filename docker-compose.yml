@@ -19,22 +19,9 @@ services:
       - "9000:9000"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - ${CONFIG_DIR}/.portainer/data:/data
+      - ${CONFIG_DIR}/portainer/data:/data
       - ${CONFIG_DIR}/shared:/shared
     environment:
-      - TZ=${TZ}
-  organizr:
-    image: lsiocommunity/organizr
-    container_name: organizr
-    restart: always
-    volumes:
-      - ${CONFIG_DIR}/.organizr:/config
-      - ${CONFIG_DIR}/shared:/shared
-    ports:
-      - "9100:80"
-    environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
       - TZ=${TZ}
   watchtower:
     image: v2tec/watchtower
@@ -48,8 +35,8 @@ services:
     container_name: plexms
     restart: unless-stopped
     volumes:
-      - ${CONFIG_DIR}/.plexms:/config
-      - ${CONFIG_DIR}/.plexms/transcode:/transcode
+      - ${CONFIG_DIR}/plexms:/config
+      - ${CONFIG_DIR}/plexms/transcode:/transcode
       - /mnt/media/Media:/media
       - ${CONFIG_DIR}/shared:/shared
     ports:
@@ -74,8 +61,8 @@ services:
     container_name: tautulli
     restart: unless-stopped
     volumes:
-      - ${CONFIG_DIR}/.tautulli/config:/config
-      - ${CONFIG_DIR}/.tautulli/logs:/logs:ro
+      - ${CONFIG_DIR}/tautulli/config:/config
+      - ${CONFIG_DIR}/tautulli/logs:/logs:ro
       - ${CONFIG_DIR}/shared:/shared
     ports:
       - "8181:8181"
@@ -83,28 +70,3 @@ services:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=${TZ}
-  vpnclient:
-    image: dperson/openvpn-client
-    container_name: vpnclient
-    cap_add:
-      - net_admin
-    security_opt:
-      - 'label:disable'
-    volumes:
-      - /dev/net:/dev/net:z
-      - ${CONFIG_DIR}/.vpnclient:/vpn
-      - ${CONFIG_DIR}/.vpnclient/credentials:/etc/openvpn/credentials
-    environment:
-      TZ: ${TZ}
-      FIREWALL: ''
-    networks:
-      - default
-    dns:
-      - 1.1.1.1
-      - 1.0.0.1
-    read_only: true
-    tmpfs:
-      - /tmp
-    restart: always
-    stdin_open: true
-    tty: true
