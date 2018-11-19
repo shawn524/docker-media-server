@@ -37,7 +37,8 @@ services:
     volumes:
       - ${CONFIG_DIR}/heimdall:/config
     ports:
-      - "8081:8081"
+      - "8081:80"
+      - "8082:443"
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
