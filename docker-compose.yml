@@ -3,40 +3,54 @@
 # Services
 #   Portainer   - Manage containers
 #   Watchtower  - Container Updating
+#   Heimdall    - Docker Dashboard
 #   Plex Server - Plex Media Server
 #   Tautilli    - Plex Server Monitor
+#   Ombi        - Plex Requests
 
 version: "3.6"
 services:
   portainer:
     image: portainer/portainer
     container_name: portainer
-    restart: always
+    restart: unless-stopped
     command: --templates http://templates/templates.json
-    ports:
-      - "9000:9000"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ${CONFIG_DIR}/portainer/data:/data
       - ${CONFIG_DIR}/shared:/shared
+    ports:
+      - "9000:9000"
     environment:
       - TZ=${TZ}
   watchtower:
     image: v2tec/watchtower
     container_name: watchtower
-    restart: always
+    restart: unless-stopped
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     command: --schedule "0 0 4 * * *" --cleanup
+  heimdall:
+    image: linuxserver/heimdall
+    container_name: heimdall
+    restart: unless-stopped
+    volumes:
+      - ${CONFIG_DIR}/heimdall:/config
+    ports:
+      - "8081:8081"
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
   plexms:
-    image: plexinc/pms-docker
+    image: plexinc/pms-docker:plexpass
     container_name: plexms
     restart: unless-stopped
     volumes:
+      - ${MEDIA_DIR}:/media
       - ${CONFIG_DIR}/plexms:/config
-      - ${CONFIG_DIR}/plexms/transcode:/transcode
-      - /mnt/media/Media:/media
       - ${CONFIG_DIR}/shared:/shared
+      - /tmp/transcode:/transcode
     ports:
       - "32400:32400/tcp"
       - "3005:3005/tcp"
@@ -58,12 +72,28 @@ services:
     image: linuxserver/tautulli
     container_name: tautulli
     restart: unless-stopped
+    depends_on:
+      - plexms
     volumes:
       - ${CONFIG_DIR}/tautulli/config:/config
       - ${CONFIG_DIR}/tautulli/logs:/logs:ro
       - ${CONFIG_DIR}/shared:/shared
     ports:
       - "8181:8181"
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+  ombi:
+    image: linuxserver/ombi
+    container_name: ombi
+    restart: unless-stopped
+    depends_on:
+      - plexms
+    volumes:
+      - ${CONFIG_DIR}/ombi:/config
+    ports:
+      - "3579:3579"
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
