@@ -9,6 +9,12 @@
 #   Ombi        - Plex Requests
 
 version: "3.6"
+networks:
+  internal:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.21.0.0/24
 services:
   portainer:
     image: portainer/portainer
@@ -23,6 +29,9 @@ services:
       - "9000:9000"
     environment:
       - TZ=${TZ}
+    networks:
+      internal:
+        ipv4_address: 172.21.0.10
   watchtower:
     image: v2tec/watchtower
     container_name: watchtower
@@ -30,6 +39,9 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     command: --schedule "0 0 4 * * *" --cleanup
+    networks:
+      internal:
+        ipv4_address: 172.21.0.11
   heimdall:
     image: linuxserver/heimdall
     container_name: heimdall
@@ -43,6 +55,9 @@ services:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=${TZ}
+    networks:
+      internal:
+        ipv4_address: 172.21.0.12
   plexms:
     image: plexinc/pms-docker:plexpass
     container_name: plexms
@@ -69,6 +84,9 @@ services:
       - PLEX_UID=${PUID}
       - PLEX_GID=${PGID}
       - ADVERTISE_IP=http://10.0.10.53:32400/
+    networks:
+      internal:
+        ipv4_address: 172.21.0.15
   tautulli:
     image: linuxserver/tautulli
     container_name: tautulli
@@ -85,6 +103,9 @@ services:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=${TZ}
+    networks:
+      internal:
+        ipv4_address: 172.21.0.16
   ombi:
     image: linuxserver/ombi
     container_name: ombi
@@ -99,3 +120,6 @@ services:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=${TZ}
+    networks:
+      internal:
+        ipv4_address: 172.21.0.17
