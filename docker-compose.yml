@@ -2,11 +2,9 @@
 #
 # Services
 #   Portainer   - Manage containers
-#   Organizr    - Home server web interface
 #   Watchtower  - Container Updating
 #   Plex Server - Plex Media Server
 #   Tautilli    - Plex Server Monitor
-#   VPN         - OpenVPN client to route traffic through
 
 version: "3.6"
 services:
