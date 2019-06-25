@@ -123,3 +123,17 @@ services:
     networks:
       internal:
         ipv4_address: 172.21.0.17
+  filebot:
+    image: jlesage/filebot
+    container_name: filebot
+    restart: unless-stopped
+    volumes:
+      - ${CONFIG_DIR}/filebot:/config
+      - ${BASE_DIR}:/storage
+    ports:
+      - "5800:5800"
+    environment:
+      - TZ=${TZ}
+    networks:
+      internal:
+        ipv4_address: 172.21.0.18
