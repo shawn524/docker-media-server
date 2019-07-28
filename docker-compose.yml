@@ -6,7 +6,6 @@
 #   Heimdall    - Docker Dashboard
 #   Plex Server - Plex Media Server
 #   Tautilli    - Plex Server Monitor
-#   Ombi        - Plex Requests
 
 version: "3.6"
 networks:
@@ -84,9 +83,10 @@ services:
       - PLEX_UID=${PUID}
       - PLEX_GID=${PGID}
       - ADVERTISE_IP=http://10.0.10.53:32400/
-    networks:
-      internal:
-        ipv4_address: 172.21.0.15
+    network_mode: host
+    # networks:
+    #   internal:
+    #     ipv4_address: 172.21.0.15
   tautulli:
     image: linuxserver/tautulli
     container_name: tautulli
@@ -106,34 +106,3 @@ services:
     networks:
       internal:
         ipv4_address: 172.21.0.16
-  ombi:
-    image: linuxserver/ombi
-    container_name: ombi
-    restart: unless-stopped
-    depends_on:
-      - plexms
-    volumes:
-      - ${CONFIG_DIR}/ombi:/config
-    ports:
-      - "3579:3579"
-    environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - TZ=${TZ}
-    networks:
-      internal:
-        ipv4_address: 172.21.0.17
-  filebot:
-    image: jlesage/filebot
-    container_name: filebot
-    restart: unless-stopped
-    volumes:
-      - ${CONFIG_DIR}/filebot:/config
-      - ${BASE_DIR}:/storage
-    ports:
-      - "5800:5800"
-    environment:
-      - TZ=${TZ}
-    networks:
-      internal:
-        ipv4_address: 172.21.0.18
