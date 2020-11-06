@@ -6,8 +6,9 @@
 #   Heimdall    - Docker Dashboard
 #   Plex Server - Plex Media Server
 #   Tautilli    - Plex Server Monitor
+#   Factorio    - Factorio server
 
-version: "3.6"
+version: "3.7"
 networks:
   internal:
     ipam:
@@ -16,7 +17,7 @@ networks:
         - subnet: 172.21.0.0/24
 services:
   portainer:
-    image: portainer/portainer
+    image: portainer/portainer-ce
     container_name: portainer
     restart: unless-stopped
     command: --templates http://templates/templates.json
@@ -107,3 +108,17 @@ services:
     networks:
       internal:
         ipv4_address: 172.21.0.16
+  factorio:
+    image: factoriotools/factorio
+    container_name: factorio
+    restart: unless-stopped
+    ports:
+     - "34197:34197/udp"
+     - "27015:27015/tcp"
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+     - ${CONFIG_DIR}/factorio:/factorio
+    network_mode: host
