@@ -3,10 +3,10 @@
 # Services
 #   Portainer   - Manage containers
 #   Watchtower  - Container Updating
-#   Heimdall    - Docker Dashboard
 #   Plex Server - Plex Media Server
 #   Tautilli    - Plex Server Monitor
 #   Factorio    - Factorio server
+#   Pi-Hole     - Pi-Hole server
 
 version: "3.7"
 networks:
@@ -42,22 +42,6 @@ services:
     networks:
       internal:
         ipv4_address: 172.21.0.11
-  heimdall:
-    image: linuxserver/heimdall
-    container_name: heimdall
-    restart: unless-stopped
-    volumes:
-      - ${CONFIG_DIR}/heimdall:/config
-    ports:
-      - "8081:80"
-      - "8082:443"
-    environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - TZ=${TZ}
-    networks:
-      internal:
-        ipv4_address: 172.21.0.12
   plexms:
     image: plexinc/pms-docker:plexpass
     container_name: plexms
@@ -119,6 +103,32 @@ services:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=${TZ}
+      - UPDATE_MODS_ON_START=true
     volumes:
      - ${CONFIG_DIR}/factorio:/factorio
     network_mode: host
+  pihole:
+    image: pihole/pihole:latest
+    container_name: pihole
+    restart: unless-stopped
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+      - "67:67/udp"
+      - "80:80/tcp"
+      - "443:443/tcp"
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - WEBPASSWORD=${WEBPASSWORD}
+    volumes:
+      - ${CONFIG_DIR}/pihole/etc-pihole:/etc/pihole/
+      - ${CONFIG_DIR}/pihole/etc-dnsmasq.d/:/etc/dnsmasq.d/
+    # Recommended but not required (DHCP needs NET_ADMIN)
+    #   https://github.com/pi-hole/docker-pi-hole#note-on-capabilities
+    cap_add:
+      - NET_ADMIN
+    networks:
+      internal:
+        ipv4_address: 172.21.0.17
