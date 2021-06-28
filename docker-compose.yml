@@ -93,7 +93,7 @@ services:
       internal:
         ipv4_address: 172.21.0.16
   factorio:
-    image: factoriotools/factorio
+    image: factoriotools/factorio:stable
     container_name: factorio
     restart: unless-stopped
     ports:
@@ -103,7 +103,7 @@ services:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=${TZ}
-      - UPDATE_MODS_ON_START=true
+      - UPDATE_MODS_ON_START=false
     volumes:
      - ${CONFIG_DIR}/factorio:/factorio
     network_mode: host
