@@ -73,40 +73,6 @@ services:
     # networks:
     #   internal:
     #     ipv4_address: 172.21.0.15
-  tautulli:
-    image: linuxserver/tautulli
-    container_name: tautulli
-    restart: unless-stopped
-    depends_on:
-      - plexms
-    volumes:
-      - ${CONFIG_DIR}/tautulli/config:/config
-      - ${CONFIG_DIR}/tautulli/logs:/logs:ro
-      - ${CONFIG_DIR}/shared:/shared
-    ports:
-      - "8181:8181"
-    environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - TZ=${TZ}
-    networks:
-      internal:
-        ipv4_address: 172.21.0.16
-  factorio:
-    image: factoriotools/factorio:stable
-    container_name: factorio
-    restart: unless-stopped
-    ports:
-     - "34197:34197/udp"
-     - "27015:27015/tcp"
-    environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - TZ=${TZ}
-      - UPDATE_MODS_ON_START=false
-    volumes:
-     - ${CONFIG_DIR}/factorio:/factorio
-    network_mode: host
   pihole:
     image: pihole/pihole:latest
     container_name: pihole
